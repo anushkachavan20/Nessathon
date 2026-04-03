@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overwatch AI Monitoring</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .hero {
+      background: linear-gradient(135deg, #0d3b66 0%, #1a5490 100%);
+      color: #ffffff;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .hero h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+    .hero p {
+      margin: 10px 0 0 0;
+      font-size: 16px;
+      opacity: 0.9;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      padding: 40px 20px;
+      max-width: 720px;
+      margin: 0 auto;
+    }
+    .dashboard-card {
+      background: #ffffff;
+      border: 2px solid #dbe3ef;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    .dashboard-card:hover {
+      border-color: #0d6efd;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+    }
+    .dashboard-card h2 {
+      margin: 0 0 10px 0;
+      color: #0d3b66;
+    }
+    .dashboard-card p {
+      margin: 10px 0;
+      color: #4f5d75;
+      font-size: 14px;
+    }
+    .dashboard-card a {
+      display: inline-block;
+      background: #0d6efd;
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    .dashboard-card a:hover {
+      background: #0b5ed7;
+    }
+    @media (max-width: 600px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <h1>Overwatch AI</h1>
+    <p>Autonomous Production Monitoring and Incident Resolution (Memory Leak Focus)</p>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <h2>🚨 Production Monitoring</h2>
+      <p>Detect CPU spikes caused by memory leaks from noisy alerts and anomalies.</p>
+      <p style="font-size: 12px; color: #999;">
+        Ingest CPU/memory/logs → Noise filtering → Correlate memory leak → Groq root-cause summary → Human approves → Execute → SQLite audit trail
+      </p>
+      <a href="index.html">Open Dashboard</a>
+    </div>
+
+  </div>
+
+  <div style="padding: 20px; text-align: center; color: #7f8c8d; font-size: 12px;">
+    <p>This system follows a human-in-the-loop workflow with full audit logging.</p>
+    <p>Backend running on http://localhost:8000</p>
+  </div>
+</body>
+</html>

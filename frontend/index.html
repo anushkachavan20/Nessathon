@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring Demo Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Overwatch AI - CPU Spike / Memory Leak Dashboard</h1>
+    <div class="small">Backend: http://localhost:8000</div>
+  </header>
+
+  <div class="layout">
+    <main>
+      <section class="card">
+      <h3>Failure Injection</h3>
+      <div>
+        <button onclick="inject('db_down', true)" class="warn">Inject db_down ON</button>
+        <button onclick="inject('db_down', false)" class="secondary">db_down OFF</button>
+      </div>
+      <div>
+        <button onclick="inject('third_party_fail', true)" class="warn">Inject third_party_fail ON</button>
+        <button onclick="inject('third_party_fail', false)" class="secondary">third_party_fail OFF</button>
+      </div>
+      <div>
+        <button onclick="inject('memory_leak', true)" class="warn">Inject memory_leak ON</button>
+        <button onclick="inject('memory_leak', false)" class="secondary">memory_leak OFF</button>
+      </div>
+      <div>
+        <button onclick="inject('queue_lag', true)" class="warn">Inject queue_lag ON</button>
+        <button onclick="inject('queue_lag', false)" class="secondary">queue_lag OFF</button>
+      </div>
+
+      <h3>Traffic and Monitor</h3>
+      <button onclick="createSampleOrder()">Create Sample Order</button>
+      <button onclick="bulkOrders(20)">Create 20 Orders</button>
+      <button onclick="injectMemoryLeakSignals()" class="warn">Inject CPU+Memory+OOM Signals</button>
+      <button onclick="runScan()">Run Monitor Scan</button>
+      <button onclick="refreshAll()" class="secondary">Refresh</button>
+      <pre id="status" class="small"></pre>
+      </section>
+
+      <section class="card">
+        <h3>Service Health</h3>
+        <div id="health-status">Checking...</div>
+      </section>
+
+      <section class="card">
+        <h3>Incidents (Click to Open Side Panel)</h3>
+        <div id="incidents"></div>
+      </section>
+
+      <section class="card">
+        <h3>Latest Telemetry</h3>
+        <div id="telemetry"></div>
+      </section>
+
+      <section class="card">
+        <h3>Audit Log (In-Memory)</h3>
+        <div id="audit"></div>
+      </section>
+
+      <section class="card">
+        <h3>Persisted Audit (SQLite)</h3>
+        <div id="audit-persisted"></div>
+      </section>
+    </main>
+
+    <aside class="side-panel">
+      <div class="panel-header">
+        <h3>Incident Assistant</h3>
+        <div class="small">Copilot-like action panel</div>
+      </div>
+      <div id="incident-panel" class="panel-body small">
+        Select an incident from the list to review and take action.
+      </div>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
