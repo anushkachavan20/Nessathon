@@ -416,15 +416,15 @@ def scenario_from_signals(error_rate: float, p95_latency: float) -> tuple[str, s
     if failures["db_down"]:
         words.update(["db_timeout", "5xx", "latency_high"])
         return "db_down", words
+    if failures["memory_leak"]:
+        words.update(["memory_growth", "oom_kill", "restart_spike"])
+        return "memory_leak", words
+    if failures["queue_lag"]:
+        words.update(["consumer_lag", "delayed_jobs", "timeout_downstream"])
+        return "queue_lag", words
     if failures["third_party_fail"]:
         words.update(["provider_503", "retry_storm", "queue_growth"])
         return "third_party_fail", words
-    if failures["memory_leak"] and state["memory_mb"] > 900:
-        words.update(["memory_growth", "oom_kill", "restart_spike"])
-        return "memory_leak", words
-    if failures["queue_lag"] and state["queue_lag"] > 50:
-        words.update(["consumer_lag", "delayed_jobs", "timeout_downstream"])
-        return "queue_lag", words
     if p95_latency > 1200 and state["queue_lag"] > 20:
         words.update(["latency_high", "queue_growth", "consumer_lag"])
         return "queue_lag", words
@@ -742,6 +742,10 @@ def inject_failure(payload: InjectFailureRequest) -> dict[str, Any]:
 
     disabled_others: list[str] = []
     if payload.enabled:
+        # Avoid cross-scenario contamination from old logs/alerts when switching failures.
+        telemetry.clear()
+        local_observed_state["logs"] = []
+        local_observed_state["alerts"] = []
         # Keep demos deterministic: only one active injected failure at a time.
         for name, enabled in list(failures.items()):
             if name != payload.scenario and enabled:
@@ -891,13 +895,28 @@ def monitor_scan() -> dict[str, Any]:
         if any(token in alert.lower() for token in ["memory", "oom", "gc"])
     )
 
-    if cpu_spike and memory_high and oom_log_seen:
+    active_failure_names = [name for name, enabled in failures.items() if enabled]
+    memory_signature_present = (
+        memory_signal_count > 0
+        or "outofmemoryerror" in log_joined
+        or "gc" in log_joined
+        or "memory leak" in log_joined
+    )
+
+    if len(active_failure_names) == 1:
+        # Single active injection should drive incident scenario deterministically.
+        scenario = active_failure_names[0]
+    elif cpu_spike and memory_high and oom_log_seen:
+        scenario = "memory_leak"
+    elif memory_signature_present and (memory_peak >= 600 or cpu_peak >= 75):
         scenario = "memory_leak"
     else:
         scenario, _ = scenario_from_signals(error_rate, p95_latency)
 
     signal_strength = min(1.0, (error_rate * 3.5) + (p95_latency / 3000.0))
     confidence = calculate_confidence(scenario, signal_strength)
+    if len(active_failure_names) == 1 and scenario == active_failure_names[0]:
+        confidence = round(max(confidence, 0.88), 2)
     if scenario == "memory_leak" and cpu_spike and memory_high and oom_log_seen:
         confidence = round(max(confidence, 0.88), 2)
 
