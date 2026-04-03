@@ -619,6 +619,15 @@ def _check_db() -> dict[str, Any]:
 def health() -> dict[str, Any]:
     """Multi-component health check — mirrors Kubernetes liveness + readiness probes."""
     db_check = _check_db()
+    observed_metrics = fetch_observed_metrics()
+    current_memory_mb = round(
+        max(
+            float(state["memory_mb"]),
+            float(local_observed_state.get("memory_mb", state["memory_mb"])),
+            float(observed_metrics.get("memory_mb", state["memory_mb"])),
+        ),
+        1,
+    )
 
     # Simulate what happens when the upstream DB (e.g. Postgres for order-api)
     # is down: the app-level DB connection fails, making the pod unready.
@@ -632,13 +641,25 @@ def health() -> dict[str, Any]:
         app_db = {"status": "ok"}
 
     # Memory pressure check
-    if state["memory_mb"] > 900:
-        memory_check = {"status": "warning", "memory_mb": round(state["memory_mb"], 1)}
+    if current_memory_mb > 1100:
+        memory_check = {
+            "status": "error",
+            "memory_mb": current_memory_mb,
+            "note": "memory leak has pushed heap into critical territory",
+        }
+    elif failures["memory_leak"] or current_memory_mb > 850:
+        memory_check = {
+            "status": "warning",
+            "memory_mb": current_memory_mb,
+            "note": "memory pressure detected" if failures["memory_leak"] else None,
+        }
     else:
-        memory_check = {"status": "ok", "memory_mb": round(state["memory_mb"], 1)}
+        memory_check = {"status": "ok", "memory_mb": current_memory_mb}
 
     overall = "ok"
     if db_check["status"] == "error" or app_db["status"] == "error":
+        overall = "unhealthy"
+    elif memory_check["status"] == "error":
         overall = "unhealthy"
     elif memory_check["status"] == "warning":
         overall = "degraded"
